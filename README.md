@@ -152,6 +152,94 @@ git clone https://github.com/ThatMann-bot/sell-side-roadshow-planner.git
 
 For regular installation, downloading the ZIP and copying/importing the folder is usually simpler.
 
+## Install by Chatting With Your Agent
+
+If your agent has file access and can download from GitHub, you can often install the skill by pasting one of the prompts below into the agent. This is usually more convenient than manually moving folders.
+
+General prompt for any skills-compatible agent:
+
+```text
+Please install this Agent Skill from GitHub:
+https://github.com/ThatMann-bot/sell-side-roadshow-planner
+
+Install the whole `sell-side-roadshow-planner` folder, not just `SKILL.md`.
+Keep `SKILL.md`, `scripts/`, `references/`, and `agents/` together.
+After installation, verify that the skill can be discovered and tell me where you installed it.
+```
+
+### Ask Codex to Install
+
+Use this in Codex:
+
+```text
+请从 https://github.com/ThatMann-bot/sell-side-roadshow-planner 安装这个 Agent Skill。
+请先检查仓库根目录有 SKILL.md，然后把完整的 sell-side-roadshow-planner 文件夹安装到我的 Codex skills 目录。
+保留 scripts/、references/、agents/，不要只复制 SKILL.md。
+安装后请验证 skill 是否能被发现，并告诉我安装路径。
+```
+
+If Codex has a skill installer available, it can use that. Otherwise it can download the ZIP or fetch the repository contents and copy the folder into:
+
+```text
+~/.codex/skills/sell-side-roadshow-planner/
+```
+
+### Ask WorkBuddy to Import
+
+Use this in WorkBuddy:
+
+```text
+帮我导入一个自定义 Skill：
+https://github.com/ThatMann-bot/sell-side-roadshow-planner
+
+请把整个 sell-side-roadshow-planner 文件夹作为一个 Skill 导入。
+主说明文件是 SKILL.md，scripts/ 和 references/ 是支持资源。
+如果当前版本不能直接从 GitHub 导入，请打开自定义 Skill/导入 Skill 的界面，告诉我需要上传 ZIP 还是粘贴 SKILL.md。
+```
+
+WorkBuddy builds may differ. Some versions use an in-app Skill Marketplace or Custom Skill importer; some may require uploading a ZIP or creating the skill from pasted Markdown. If WorkBuddy cannot directly install from a URL, download this repository as ZIP first, then ask WorkBuddy to import that ZIP/folder.
+
+### Ask Claude Code to Install
+
+Use this in Claude Code for a personal skill:
+
+```text
+Please install this Agent Skill:
+https://github.com/ThatMann-bot/sell-side-roadshow-planner
+
+Install it as a personal Claude Code skill at:
+~/.claude/skills/sell-side-roadshow-planner/
+
+Copy the whole folder, including SKILL.md, scripts/, references/, and agents/.
+After installing, verify that `/sell-side-roadshow-planner` is available.
+```
+
+Use this for a project-local Claude Code skill:
+
+```text
+Please install this Agent Skill into the current project:
+https://github.com/ThatMann-bot/sell-side-roadshow-planner
+
+Place the whole folder at:
+.claude/skills/sell-side-roadshow-planner/
+
+Keep SKILL.md, scripts/, references/, and agents/ together.
+After installing, verify that `/sell-side-roadshow-planner` is available in this project.
+```
+
+### Ask Claude.ai Chat to Add It
+
+Claude.ai usually manages custom skills through the app UI rather than direct filesystem access. Use this prompt to have Claude guide the import:
+
+```text
+I want to add this custom skill:
+https://github.com/ThatMann-bot/sell-side-roadshow-planner
+
+Please guide me through adding it in Claude.ai Customize -> Skills.
+If you can use the uploaded files, ask me to upload the ZIP of the repository.
+The skill root is the sell-side-roadshow-planner folder containing SKILL.md.
+```
+
 ## Map API Setup
 
 For live address lookup and route optimization, configure at least one map provider key.
