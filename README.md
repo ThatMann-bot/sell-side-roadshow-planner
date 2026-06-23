@@ -36,21 +36,121 @@ Important distinction:
 
 ## Installation
 
-Clone this repository into your Codex skills directory.
+Agent skills are installed by giving your AI agent access to a folder that contains `SKILL.md` at its root. Most users do not need to clone this repository with Git.
+
+Recommended generic flow:
+
+1. Open this repository on GitHub.
+2. Click **Code** -> **Download ZIP**.
+3. Unzip it.
+4. Make sure the final folder is named `sell-side-roadshow-planner` and contains `SKILL.md`, `scripts/`, `references/`, and `agents/`.
+5. Copy or import that folder into your agent's skills location.
+6. Restart or refresh the agent if it does not detect the skill immediately.
+
+The folder should look like this after installation:
+
+```text
+sell-side-roadshow-planner/
+  SKILL.md
+  agents/openai.yaml
+  references/
+  scripts/
+```
+
+### Codex
+
+Install as a personal Codex skill:
 
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/ThatMann-bot/sell-side-roadshow-planner.git "$env:USERPROFILE\.codex\skills\sell-side-roadshow-planner"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
+Copy-Item -Recurse -Force ".\sell-side-roadshow-planner" "$env:USERPROFILE\.codex\skills\sell-side-roadshow-planner"
 ```
 
 macOS/Linux:
 
 ```bash
-git clone https://github.com/ThatMann-bot/sell-side-roadshow-planner.git ~/.codex/skills/sell-side-roadshow-planner
+mkdir -p ~/.codex/skills
+cp -R ./sell-side-roadshow-planner ~/.codex/skills/sell-side-roadshow-planner
 ```
 
-Restart Codex after installation so the new skill can be discovered.
+Restart Codex after copying the folder, then invoke it naturally:
+
+```text
+$sell-side-roadshow-planner 周三北京5家，机构A 9点张总、机构B下午2点李总、机构C王总灵活
+```
+
+### WorkBuddy
+
+WorkBuddy versions may expose skills through the app UI rather than a fixed public filesystem path.
+
+Recommended:
+
+1. Open WorkBuddy.
+2. Go to **Skills**, **Skill Marketplace**, or **Custom Skill**.
+3. Choose **Import**, **Create custom skill**, or the equivalent option in your version.
+4. Import the `sell-side-roadshow-planner` folder, or paste the contents of `SKILL.md` and attach the `scripts/` and `references/` folders as supporting resources.
+5. Refresh/restart WorkBuddy if the skill does not appear immediately.
+
+If your WorkBuddy build supports local skill folders, place the whole folder under the local skills directory used by your client, commonly:
+
+```text
+~/.agents/skills/sell-side-roadshow-planner/
+```
+
+On Windows, that is usually:
+
+```text
+C:\Users\<you>\.agents\skills\sell-side-roadshow-planner\
+```
+
+Keep the folder structure intact; do not copy only `SKILL.md`, because the skill uses bundled Python scripts.
+
+### Claude
+
+For Claude Code, install either as a personal skill or a project skill.
+
+Personal skill, available across projects:
+
+```bash
+mkdir -p ~/.claude/skills
+cp -R ./sell-side-roadshow-planner ~/.claude/skills/sell-side-roadshow-planner
+```
+
+Project skill, available only in one repository:
+
+```bash
+mkdir -p .claude/skills
+cp -R ./sell-side-roadshow-planner .claude/skills/sell-side-roadshow-planner
+```
+
+On Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
+Copy-Item -Recurse -Force ".\sell-side-roadshow-planner" "$env:USERPROFILE\.claude\skills\sell-side-roadshow-planner"
+```
+
+In Claude Code, invoke it directly with:
+
+```text
+/sell-side-roadshow-planner
+```
+
+or let Claude load it automatically when your request matches the description.
+
+For Claude.ai chat, enable code execution/file creation and upload or add the custom skill through **Customize -> Skills** if your plan supports custom skills.
+
+### Optional: Git for Maintainers
+
+If you want to contribute changes or keep a local working copy connected to GitHub, then cloning is useful:
+
+```bash
+git clone https://github.com/ThatMann-bot/sell-side-roadshow-planner.git
+```
+
+For regular installation, downloading the ZIP and copying/importing the folder is usually simpler.
 
 ## Map API Setup
 
@@ -148,4 +248,3 @@ A typical answer includes:
 - Cross-check official pages for address-critical institutions.
 - Ask the user or sales to confirm ambiguous entities, multiple offices, recently moved headquarters, building entrance, and reception floor.
 - Do not describe a whole-day order as "Amap recommended" unless Amap itself produced that exact itinerary. Use: "Amap provided single-leg estimates; the skill optimized the whole-day order."
-
