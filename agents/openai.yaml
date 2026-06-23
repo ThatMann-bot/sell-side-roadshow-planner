@@ -1,0 +1,7 @@
+interface:
+  display_name: "卖方路演行程规划"
+  short_description: "卖方路演高德查址、官网核验、全局路径优化和微信通知助手"
+  default_prompt: "Use $sell-side-roadshow-planner to look up live map addresses, cross-check official sites, optimize a buffered roadshow itinerary with Amap leg estimates, and draft change notices."
+
+policy:
+  allow_implicit_invocation: true
