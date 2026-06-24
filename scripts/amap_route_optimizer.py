@@ -472,35 +472,100 @@ def order_result(
 
 
 def render_markdown(result: Dict[str, Any], stops: Dict[str, Stop]) -> str:
+    best = result["best"]
+    timeline = best["timeline"]
+    meeting_events = [event for event in timeline if event.get("meeting_id")]
+    checked_orders = int(result.get("checked_orders") or 0)
+    total_orders = math.factorial(len(meeting_events)) if meeting_events else 0
+    if total_orders and checked_orders >= total_orders:
+        search_mode = "精确枚举"
+    elif checked_orders:
+        search_mode = "启发式降级"
+    else:
+        search_mode = "人工估算"
+
+    def cell(value: Any) -> str:
+        return str(value or "").replace("|", "/").replace("\n", " ").strip()
+
+    def mode_label(mode: str) -> str:
+        labels = {
+            "taxi": "打车",
+            "transit": "公共交通",
+            "same_place": "同楼/同地",
+            "missing_estimate": "缺少路由估算",
+        }
+        return labels.get(mode, mode or "-")
+
+    def route_node(event: Dict[str, Any]) -> str:
+        status = "固定" if event.get("fixed") else "灵活"
+        contact = f"/{event.get('contact')}" if event.get("contact") else ""
+        return f"{event.get('name')}{contact}({event.get('start')}-{event.get('end')} {status})"
+
+    start_name = str((result.get("start") or {}).get("name") or "起点")
+    route_parts = [start_name]
+    for event in timeline:
+        if event.get("meeting_id"):
+            route_parts.append(route_node(event))
+        elif event.get("event") == "end_transfer":
+            route_parts.append(str(event.get("location") or "终点"))
+
     rows = [
-        f"Checked orders: {result['checked_orders']}",
-        f"Best order: {' -> '.join(result['best']['best_order'])}",
+        "路线顺序图：",
+        f"`{' -> '.join(route_parts)}`",
         "",
-        "| Time | Plan | Address/contact | Transport | Status | Notes |",
+        (
+            f"优化证据：{search_mode}；检查 {checked_orders}/{total_orders or checked_orders} 种顺序。"
+            "高德提供单段 taxi/transit 路线和耗时，脚本基于这些单段结果做全天顺序评分。"
+        ),
+        f"最佳顺序：{' -> '.join(best['best_order'])}",
+        "",
+        "| 时间 | 安排 | 地点/联系人 | 交通与耗时 | 状态 | 备注 |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
-    for event in result["best"]["timeline"]:
+    for event in timeline:
         if event.get("event") == "end_transfer":
+            transport = f"{mode_label(event.get('mode', ''))} {event['travel_minutes']}分钟"
+            if event.get("walking_m"):
+                transport += f"，步行{event.get('walking_m', 0)}米"
             rows.append(
-                f"| {event['depart']}-{event['arrive']} | End transfer | {event.get('location','')} | {event['mode']} {event['travel_minutes']} min | - | walking {event.get('walking_m',0)}m |"
+                f"| {cell(event['depart'] + '-' + event['arrive'])} | 终点转场 | {cell(event.get('location',''))} | {cell(transport)} | - | {cell(event.get('address',''))} |"
             )
             continue
-        status = "fixed" if event.get("fixed") else "flexible"
+        status = "固定" if event.get("fixed") else "灵活"
         contact = event.get("contact") or ""
+        transport = f"{event['depart']}出发，{mode_label(event.get('mode', ''))} {event['travel_minutes']}分钟"
+        if event.get("distance_km"):
+            transport += f"，{event['distance_km']}公里"
+        if event.get("walking_m"):
+            transport += f"，步行{event.get('walking_m', 0)}米"
+        notes = f"缓冲/等待{event.get('wait_or_buffer_minutes', 0)}分钟"
+        if event.get("cluster"):
+            notes += f"，{event.get('cluster')}"
         rows.append(
-            f"| {event['start']}-{event['end']} | {event['name']} | {event.get('address','')} {contact} | "
-            f"{event['depart']} depart, {event['mode']} {event['travel_minutes']} min | {status} | "
-            f"buffer {event.get('wait_or_buffer_minutes',0)} min, walking {event.get('walking_m',0)}m |"
+            f"| {cell(event['start'] + '-' + event['end'])} | {cell(event['name'])} | {cell((event.get('address') or '') + ' ' + contact)} | "
+            f"{cell(transport)} | {cell(status)} | {cell(notes)} |"
         )
     rows.append("")
-    rows.append("Stats: " + json.dumps(result["best"]["stats"], ensure_ascii=False))
-    if result["best"]["warnings"]:
-        rows.append("Warnings: " + "；".join(result["best"]["warnings"]))
+    stats = best["stats"]
+    lunch_status = "可满足" if stats.get("lunch_ok") else "未满足"
+    rows.append(
+        "统计："
+        f"交通{stats.get('travel_minutes', 0)}分钟；"
+        f"打车{stats.get('taxi_segments', 0)}段；"
+        f"公共交通{stats.get('transit_segments', 0)}段；"
+        f"步行{stats.get('walking_m', 0)}米；"
+        f"等待/缓冲{stats.get('wait_minutes', 0)}分钟；"
+        f"午饭窗口{lunch_status}。"
+    )
+    if stats.get("lunch_notes"):
+        rows.append("午饭/休息：" + "；".join(str(item) for item in stats["lunch_notes"]))
+    if best["warnings"]:
+        rows.append("风险提示：" + "；".join(best["warnings"]))
     if result.get("alternatives"):
         rows.append("")
-        rows.append("Alternatives:")
+        rows.append("备选顺序：")
         for alt in result["alternatives"]:
-            rows.append(f"- {' -> '.join(alt['best_order'])}: score {alt['score']}, warnings {len(alt['warnings'])}")
+            rows.append(f"- {' -> '.join(alt['best_order'])}：评分 {alt['score']}，风险 {len(alt['warnings'])} 条")
     return "\n".join(rows)
 
 

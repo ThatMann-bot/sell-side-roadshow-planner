@@ -18,6 +18,30 @@ Then search the official website. If a likely official contact/company page is f
 
 For unresolved institutions, write `待人工确认`; do not invent a location. Never use copied sample addresses, screenshot addresses, or stale notes as route-planning evidence.
 
+## Route Sequence Diagram
+
+Use a route sequence diagram/card before the detailed table so the user can understand the day at a glance.
+
+One-line route card for normal chat:
+
+`起点 08:15 -> 机构A/张总 09:00固定 -> 机构B/李总 11:00灵活 -> 午饭/缓冲 -> 机构C/陈总 16:30固定 -> 终点`
+
+For higher-polish output, or when the user asks for a visual route order, include a Mermaid flowchart if the interface supports it:
+
+```mermaid
+flowchart LR
+  A["起点<br/>08:15出发"] -->|"打车 25分"| B["机构A / 张总<br/>09:00-09:45 固定"]
+  B -->|"同片区 15分"| C["机构B / 李总<br/>11:00-11:45 灵活"]
+  C -->|"午饭+缓冲"| D["机构C / 陈总<br/>16:30-17:15 固定"]
+```
+
+Rules:
+
+- Keep the diagram to route order, time anchors, and travel durations. Put addresses and caveats in the table.
+- Mark fixed meetings as `固定`; mark flexible meetings as `灵活` or `窗口`.
+- If the output must be short, the route card can replace the long table only when all times are already confirmed and there are no unresolved risks.
+- If there are unresolved address or timing issues, keep both the route card and the table so assumptions remain visible.
+
 ## Itinerary
 
 Title line:
@@ -27,6 +51,10 @@ Title line:
 Context line:
 
 `酒店/起点：...；终点/硬约束：...；偏好：效率优先/体力优先/...`
+
+Route card:
+
+`起点 -> 机构A（固定09:00） -> 机构B（灵活，XX点） -> 午饭/缓冲 -> 机构C（固定16:30） -> 终点`
 
 Table:
 
@@ -57,6 +85,7 @@ Keep this short and practical:
 
 Include this block when `amap_route_optimizer.py` or another route enumeration is used:
 
+- 最优性说明：写清楚本次是 `精确枚举`、`启发式降级`，还是 `人工估算`。只有检查了所有候选顺序时，才可以说“在当前输入约束下为全局最优顺序”。
 - 数据来源：高德用于单段 taxi/transit 路线和耗时；skill 用这些单段结果做全局顺序枚举。
 - 枚举范围：检查 X 种顺序；固定会议/窗口/午餐约束是否全部满足。
 - 胜出路线：A -> B -> C，原因是固定会议安全、总交通少、少走路/少折返。

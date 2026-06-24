@@ -37,6 +37,38 @@ Do not jump straight to the final route when essential facts are missing. Ask in
 
 For screenshots, extract the visible text first. Mark uncertain OCR items and ask targeted confirmation only for items that affect routing.
 
+## Clarification Strategy
+
+Separate missing inputs into three levels. Do not turn every route request into an interrogation, but do not claim a final optimized route when critical inputs are missing.
+
+**Minimum for a first-pass route:**
+
+- city and date/weekday
+- institution list and contact names if available
+- fixed times, flexible windows, or "flexible" labels
+- start point or current location
+- default meeting duration, if different from 45 minutes
+- optimization preference: efficiency, energy, taxi-first, subway-first, or hybrid
+
+**Needed for a reliable final route:**
+
+- confirmed address or confirmed map candidate for every stop
+- end point, latest finish, train/flight/deadline, or dinner constraint
+- lunch/rest requirement and whether it can be skipped
+- attire, high heels, luggage, rain/heat sensitivity, or walking limits
+- must-arrive-early meetings, security registration, building entrance complexity, and reception rules
+- meeting priority and whether flexible meetings can move or be dropped
+
+**Ask-before-finalizing triggers:**
+
+- no start point or only a vague start such as "from Beijing"
+- any fixed meeting has no exact time, or "afternoon" is the only window
+- address candidates conflict with official-site evidence
+- route feasibility depends on skipping lunch, compressing meetings, or arriving with less than the requested buffer
+- the user asks whether the route is optimal, but live Amap routing or confirmed coordinates are unavailable
+
+Ask the smallest useful question set first, usually three to five questions. If the user only needs a rough draft, proceed with visible assumptions and label it "first-pass route, pending address/time confirmation".
+
 ## Address Lookup
 
 Use `scripts/address_lookup.py` before asking the user to manually supply all addresses.
@@ -91,6 +123,8 @@ Use fixed meetings as anchors. Group nearby institutions, then place flexible me
 
 For three or more stops, or whenever the user asks about optimality, use `scripts/amap_route_optimizer.py` after address confirmation. Give it confirmed coordinates or official-site-checked addresses, and let it build the Amap leg matrix and enumerate whole-day orders. Use the winning order as the quantitative baseline, then apply human judgment for sales relationship priority, meeting importance, attire, weather, security registration, and lunch/rest.
 
+Optimization is exact only when the script checks every feasible permutation within `--max-permutations` (default 40320, enough for 8 meetings). If the stop count exceeds that cap, disclose that the script uses a heuristic fixed-time/priority sort as a fallback and treat the result as a strong draft, not a proven global optimum.
+
 For Beijing, explicitly watch these patterns:
 
 - Financial Street/西城, Guomao/CBD, Chaoyang Park/Blue Harbor, Wangjing, and South Beijing can be far enough that one wrong ordering creates a full extra commute.
@@ -117,12 +151,13 @@ Always explain the non-obvious legs: why taxi here, why subway there, and where 
 If producing a route, include:
 
 1. Address lookup results, official website cross-checks, confirmations, or assumptions used.
-2. A chronological itinerary with departure/arrival times, meeting windows, institution/contact, address/cluster, transport leg, duration, fixed/flexible label, and buffer/rest notes.
-3. A route summary: total meetings, route direction, transport segments, estimated travel time, buffers, start/end time, and backtracking count if useful.
-4. Energy notes: lunch, rest after three consecutive meetings, high-heel/long-walk warnings, cafe/email buffer before important fixed meetings, and weather/luggage risks.
-5. A "why this order" rationale in plain language.
-6. Optimization evidence when relevant: whether Amap was used for single-leg estimates, how many meeting orders were checked, the winning order, major rejected alternatives, and whether any hard constraint was violated.
-7. Open confirmations: any address, duration, contact, or travel-time assumptions that still need the user or sales to verify.
+2. A route sequence diagram/card before the table. Use a compact arrow line for normal chat, and a Mermaid flowchart when the surface supports diagrams and the user wants a more visual artifact.
+3. A chronological itinerary with departure/arrival times, meeting windows, institution/contact, address/cluster, transport leg, duration, fixed/flexible label, and buffer/rest notes.
+4. A route summary: total meetings, route direction, transport segments, estimated travel time, buffers, start/end time, and backtracking count if useful.
+5. Energy notes: lunch, rest after three consecutive meetings, high-heel/long-walk warnings, cafe/email buffer before important fixed meetings, and weather/luggage risks.
+6. A "why this order" rationale in plain language.
+7. Optimization evidence when relevant: whether Amap was used for single-leg estimates, how many meeting orders were checked, whether the search was exact enumeration or heuristic fallback, the winning order, major rejected alternatives, and whether any hard constraint was violated.
+8. Open confirmations: any address, duration, contact, or travel-time assumptions that still need the user or sales to verify.
 
 Read `references/output-formats.md` when you need exact table layouts or reusable output skeletons.
 
@@ -147,6 +182,8 @@ Read `references/message-templates.md` before drafting sales or buy-side notices
 ## Route Optimization Scripts
 
 Use `scripts/amap_route_optimizer.py` when the user asks for an optimal route, when the itinerary has three or more stops, or when current traffic/walking burden matters. The script calls Amap directly, builds pairwise taxi/transit legs, chooses a transport mode per leg based on preference and attire, enumerates meeting orders, and returns the best route plus alternatives.
+
+For up to the permutation cap, the script's sequence search is an exact exhaustive comparison over all meeting orders. For larger stop counts, it intentionally falls back to one heuristic order to avoid runaway API calls; say this plainly in the output and avoid calling the result "global optimum".
 
 Typical use:
 
@@ -198,8 +235,10 @@ Use `scripts/official_address_check.py` to extract address snippets from officia
 
 Before finalizing:
 
+- If start point, confirmed addresses, fixed-time details, or transport preference are missing, label the answer as a first-pass draft and ask the missing high-impact questions before presenting it as final.
 - Use `amap_route_optimizer.py` for three or more stops or when the user asks whether a route is optimal, unless live Amap access is unavailable. If unavailable, say so and fall back to manual/estimated routing.
 - Never claim Amap recommended the whole-day order; Amap recommends single-leg routes, while the skill optimizes the meeting sequence.
+- State whether the route sequence was produced by exact exhaustive enumeration, heuristic fallback, or manual planning.
 - Run live map address lookup when institution names are provided without addresses, unless the user explicitly says not to.
 - Cross-check official websites for address-critical institutions before finalizing routes; cite or name the official source used.
 - Clearly separate "高德/地图候选", "官网核验地址", "销售/用户确认地址", and "待人工确认".
@@ -209,4 +248,4 @@ Before finalizing:
 - Keep lunch/rest explicit instead of hoping a gap exists.
 - Flag travel-time uncertainty and do not overpromise if map/current traffic was unavailable.
 - Preserve the user's newest change as authoritative; do not cling to a prior route after a schedule update.
-- Make the final answer immediately copyable for the user: route first, then notices, then assumptions.
+- Make the final answer immediately copyable for the user: route sequence diagram/card first, then the itinerary table, then notices, then assumptions.
